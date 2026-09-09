@@ -256,10 +256,30 @@ export function Coder3dPreviewPanel(props: { terminal?: TerminalBridge }) {
 
   // NIfTI jumps to Medical View, meshes to Design View; everything else
   // previews beside the tree.
+  // Opening something from one case must not leave another case's part loaded
+  // in a different view. Two panes showing two patients at once is how a wrong
+  // part gets printed, so the stale one is dropped rather than left behind.
+  const dropOtherCases = (caseID: string | undefined) => {
+    if (!caseID) return
+    const foreign = (path: string | undefined) => !!path && caseIDForPath(path) !== caseID
+    if (foreign(meshPath())) {
+      setMeshPath(undefined)
+      setMeshState(undefined)
+      setManifest(undefined)
+    }
+    if (foreign(jobPath())) setJobPath(undefined)
+    if (foreign(medPath())) setMedPath(undefined)
+    if (foreign(docPath())) {
+      setDocPath(undefined)
+      setDocState(undefined)
+    }
+  }
+
   const openFromTree = (path: string) => {
     setSelectedPath(path)
     const caseID = caseIDForPath(path)
     if (caseID) setSelectedCaseID(caseID)
+    dropOtherCases(caseID)
     const target = modeForFileClick(path)
     if (target === "medical") {
       setMode("medical")

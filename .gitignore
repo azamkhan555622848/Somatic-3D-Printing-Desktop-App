@@ -42,3 +42,9 @@ scratch/
 *.log
 .DS_Store
 Thumbs.db
+
+# --- Machine-local generated config ----------------------------------------
+# Written by scripts/generate-config.mjs at setup time: it launches the tool
+# servers by absolute path, so it cannot be shared between machines.
+opencode-dev/3dcoder-config/opencode.jsonc
+opencode-dev/3dcoder-config/claude-subagent-mcp.json
