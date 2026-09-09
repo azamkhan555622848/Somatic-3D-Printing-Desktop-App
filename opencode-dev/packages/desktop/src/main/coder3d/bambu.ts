@@ -40,7 +40,12 @@ export function findBambuStudio(): string | null {
 export function bambuTargets(rel: string): string[] {
   if (/\.3mf$/i.test(rel) || /\.gcode$/i.test(rel)) return [rel]
   const stem = rel.replace(/\.[^./\\]+$/, "")
-  return [`${stem}.3mf`]
+  // The 3mf first, because it carries the print profile. But only the CAD
+  // runner writes one: a mesh that came from segmentation or repair has just
+  // a glb and an stl beside it, and demanding the 3mf left this button doing
+  // nothing at all on an anatomy mesh. Bambu Studio imports stl natively, so
+  // it is the fallback - the same shape as the Blender and FreeCAD lists.
+  return [...new Set([`${stem}.3mf`, `${stem}.stl`])]
 }
 
 export function openInBambuStudio(filePath: string): { ok: boolean; error?: string } {

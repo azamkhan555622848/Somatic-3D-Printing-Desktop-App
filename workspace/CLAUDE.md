@@ -72,3 +72,19 @@ my estimate from Z" is a good answer. Silently inventing a number is not.
 non-interactive, so no permission prompt can reach the user — if a tool is
 genuinely unavailable, name it and continue with what you have rather than
 asking for approval that cannot arrive.
+
+## Finish the design in the same turn you build it
+
+A preview that looks right is not a finished design. The operator's next move
+is the Blender, FreeCAD or Bambu Studio button, and each one opens a file
+sitting beside the model. `cad_run` writes all four — `.stl`, `.glb`, `.3mf`
+and `cad/<name>.step` — so run it and check the manifest came back with
+`error: null`. Writing the script is not building it.
+
+A mesh from segmentation or repair has only `.glb` and `.stl`, which is
+correct: there is no CAD script behind it, so there is no STEP to write. Bambu
+Studio opens the `.stl`.
+
+To change how much filament a part uses, pass `settings` to `slice_model`
+rather than sending anyone into Bambu Studio's interface. See the
+`finishing-a-design` skill for the full workflow and the safety floors.

@@ -119,7 +119,13 @@ export function openDesignIn(app: CadApp, dir: string, relPath: string): { ok: b
   // resolveWithin guards every candidate: the renderer can only ever open
   // files that live inside the workspace.
   const target = targets.map((t) => resolveWithin(dir, t)).find((abs) => abs && existsSync(abs))
-  if (!target) return { ok: false, error: `No openable file found beside ${relPath}.` }
+  if (!target)
+    return {
+      ok: false,
+      error:
+        `${app === "blender" ? "Blender" : "FreeCAD"} needs one of ${targets.join(", ")}, ` +
+        `and none of them exist yet. Ask the agent to export the part, then try again.`,
+    }
   const args = app === "blender" ? blenderArgs(target) : [target]
   // Deliberately not awaited: both are long-running GUI apps, so the child
   // only exits when the operator closes it.

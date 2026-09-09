@@ -85,13 +85,22 @@ export function registerCoder3dIpc() {
       void shell.openExternal(BAMBU_DOWNLOAD)
       return { ok: true, launched: "download" as const }
     }
-    // A mesh on screen resolves to the .3mf written beside it, which is what
-    // a slicer can actually open — the same sibling resolution the CAD apps use.
-    const target = bambuTargets(relPath)
+    // A mesh on screen resolves to a file the slicer can actually open: the
+    // .3mf written beside it, or the .stl if this mesh never came from a CAD
+    // script. Same sibling resolution the CAD app buttons use.
+    const wanted = bambuTargets(relPath)
+    const target = wanted
       .map((candidate) => resolveWithin(dir, candidate))
       .find((abs) => abs && existsSync(abs))
+    // Name the files that were looked for: "nothing happened" is the worst
+    // possible answer, and the operator can act on a list of what is missing.
     if (!target)
-      return { ok: false, error: `No .3mf beside ${relPath} — rebuild the part, or slice it first.` }
+      return {
+        ok: false,
+        error:
+          `Bambu Studio needs a .3mf or .stl beside ${relPath}, and neither is there ` +
+          `(looked for ${wanted.join(", ")}). Ask the agent to export the part, then try again.`,
+      }
     const result = openInBambuStudio(target)
     return result.ok ? { ...result, launched: "app" as const } : result
   })

@@ -582,13 +582,6 @@ export function Coder3dPreviewPanel(props: { terminal?: TerminalBridge }) {
             <Show when={status().kind === "error"}>
               <div class="text-12-regular text-red-500 shrink-0">build failed</div>
             </Show>
-            <Show when={bambuError()}>
-              {(message) => (
-                <div class="text-12-regular text-red-400 shrink-0 truncate max-w-48" title={message()}>
-                  {message()}
-                </div>
-              )}
-            </Show>
             {/* The Design View model opens in a real editor for work this
                 panel does not attempt: sculpting in Blender, feature edits on
                 the STEP in FreeCAD. Both buttons always show with a design
@@ -665,6 +658,25 @@ export function Coder3dPreviewPanel(props: { terminal?: TerminalBridge }) {
               <Icon name="close" class="size-4" />
             </button>
           </div>
+
+          {/* A failed launch used to be a truncated chip in the header, which
+              read as nothing happening at all. It gets a full line here, with
+              room for the reason and what to do about it. */}
+          <Show when={bambuError()}>
+            {(message) => (
+              <div class="shrink-0 flex items-start gap-2 px-3 py-2 border-b border-border-weaker-base bg-[rgba(220,38,38,0.08)]">
+                <div class="flex-1 text-12-regular text-red-400">{message()}</div>
+                <button
+                  type="button"
+                  class="shrink-0 flex items-center text-text-weak hover:text-text-base"
+                  title="Dismiss"
+                  onClick={() => setBambuError(undefined)}
+                >
+                  <Icon name="close" class="size-3.5" />
+                </button>
+              </div>
+            )}
+          </Show>
 
           <Show when={mode() === null}>
             <Coder3dLauncher

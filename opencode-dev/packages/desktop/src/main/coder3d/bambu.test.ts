@@ -39,8 +39,19 @@ describe("bambuTargets", () => {
   test("a mesh opens the 3mf written beside it", () => {
     // Every CAD build now exports one, and it is the file a slicer wants —
     // handing Bambu a .glb would be the wrong format for the job.
-    expect(bambuTargets("cases/k/meshes/assembly.glb")).toEqual(["cases/k/meshes/assembly.3mf"])
-    expect(bambuTargets("cases/k/meshes/assembly.stl")).toEqual(["cases/k/meshes/assembly.3mf"])
+    expect(bambuTargets("cases/k/meshes/assembly.glb")[0]).toBe("cases/k/meshes/assembly.3mf")
+    expect(bambuTargets("cases/k/meshes/assembly.stl")[0]).toBe("cases/k/meshes/assembly.3mf")
+  })
+
+  test("a mesh with no 3mf beside it still opens, via the stl", () => {
+    // Only the CAD runner writes a .3mf. A mesh that came from segmentation or
+    // repair has just .glb and .stl, and demanding the 3mf left the button
+    // doing nothing at all. Bambu Studio imports stl natively, so it is the
+    // fallback - the same shape as the Blender and FreeCAD target lists.
+    expect(bambuTargets("cases/demo-ct/meshes/liver.glb")).toEqual([
+      "cases/demo-ct/meshes/liver.3mf",
+      "cases/demo-ct/meshes/liver.stl",
+    ])
   })
 
   test("a project 3mf is already the right file", () => {
