@@ -13,11 +13,45 @@ import json
 import os
 from pathlib import Path
 
-_CANDIDATES = [
-    Path(r"C:\Program Files\Bambu Studio\bambu-studio.exe"),
-    Path(r"C:\Program Files (x86)\Bambu Studio\bambu-studio.exe"),
-    Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Bambu Studio" / "bambu-studio.exe",
-]
+def _candidates() -> list[Path]:
+    """Where Bambu Studio installs itself, per platform.
+
+    Linux has no single answer: a distro package lands in /usr/bin, the vendor
+    ships an AppImage that people keep wherever they downloaded it, and flatpak
+    puts it under /app. All three are checked, newest AppImage first. Path
+    accepts forward slashes on Windows too, so the Windows entries stay
+    readable.
+    """
+    import sys
+    if sys.platform == "win32":
+        local = os.environ.get("LOCALAPPDATA", "")
+        return [
+            Path("C:/Program Files/Bambu Studio/bambu-studio.exe"),
+            Path("C:/Program Files (x86)/Bambu Studio/bambu-studio.exe"),
+            *([Path(local) / "Programs" / "Bambu Studio" / "bambu-studio.exe"] if local else []),
+        ]
+    if sys.platform == "darwin":
+        return [
+            Path("/Applications/BambuStudio.app/Contents/MacOS/BambuStudio"),
+            Path.home() / "Applications/BambuStudio.app/Contents/MacOS/BambuStudio",
+        ]
+    appimages: list[Path] = []
+    for directory in (Path.home() / "Applications", Path.home() / "Downloads",
+                      Path("/opt"), Path.home() / ".local/bin"):
+        try:
+            appimages += sorted(directory.glob("*ambu*tudio*.AppImage"), reverse=True)
+        except OSError:
+            pass
+    return [
+        Path("/usr/bin/bambu-studio"),
+        Path("/usr/local/bin/bambu-studio"),
+        Path("/opt/bambu-studio/bambu-studio"),
+        Path("/app/bin/bambu-studio"),  # flatpak
+        *appimages,
+    ]
+
+
+_CANDIDATES = _candidates()
 
 INSTALL_HINT = (
     "Bambu Studio is required for slicing. Install the latest version from "
@@ -53,9 +87,27 @@ def find_bambu_studio() -> Path | None:
     return None
 
 
+# Where the shipped profiles live, relative to the binary. Windows keeps them
+# beside the exe; a Linux package splits them into /usr/share.
+_RESOURCE_HINT = Path("resources") / "profiles" / "BBL"
+
+
 def install_root(binary: Path | None = None) -> Path | None:
+    """The directory that contains `resources/profiles/BBL`.
+
+    An AppImage carries its resources inside the image, so there is nothing on
+    disk to point at: this returns None there rather than a directory that only
+    looks right, and the caller reports that instead of slicing with a guess.
+    """
     binary = binary or find_bambu_studio()
-    return binary.parent if binary else None
+    if binary is None:
+        return None
+    for candidate in (binary.parent, binary.parent.parent,
+                      Path("/usr/share/bambu-studio"), Path("/usr/share/BambuStudio"),
+                      Path("/app/share/bambu-studio")):
+        if (candidate / _RESOURCE_HINT).is_dir():
+            return candidate
+    return None
 
 
 def _real_profiles(directory: Path) -> list[Path]:

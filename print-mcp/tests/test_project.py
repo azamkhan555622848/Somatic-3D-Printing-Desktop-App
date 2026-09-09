@@ -108,3 +108,37 @@ def test_mesh_is_centred_before_placement(tmp_path):
         geometry = z.read("3D/Objects/Cube_1.model").decode("utf-8")
     coords = [float(v) for v in re.findall(r'x="([-\d.e]+)"', geometry)]
     assert max(abs(c) for c in coords) <= 5.001  # recentred on the origin
+
+
+def test_overrides_patch_the_settings_and_leave_the_profile_alone(tmp_path):
+    # Changing how dense a part is must not disturb which printer or filament
+    # the operator chose: only the named keys move.
+    template = write_template(tmp_path / "t.3mf")
+    mesh_path = tmp_path / "part.stl"
+    trimesh.creation.box(extents=(10, 10, 10)).export(mesh_path)
+
+    result = project.build_from_template(
+        template, mesh_path, tmp_path / "out.3mf",
+        overrides={"sparse_infill_density": "8%", "sparse_infill_pattern": "lightning"},
+    )
+    assert result["settings_changed"] == {
+        "sparse_infill_density": "8%",
+        "sparse_infill_pattern": "lightning",
+    }
+
+    with zipfile.ZipFile(tmp_path / "out.3mf") as z:
+        settings = json.loads(z.read(project.SETTINGS_ENTRY).decode("utf-8"))
+    assert settings["sparse_infill_density"] == "8%"
+    assert settings["sparse_infill_pattern"] == "lightning"
+    for key, value in TEMPLATE_SETTINGS.items():
+        assert settings[key] == value
+
+
+def test_no_overrides_leaves_the_settings_byte_for_byte(tmp_path):
+    template = write_template(tmp_path / "t.3mf")
+    mesh_path = tmp_path / "part.stl"
+    trimesh.creation.box(extents=(10, 10, 10)).export(mesh_path)
+
+    project.build_from_template(template, mesh_path, tmp_path / "out.3mf")
+    with zipfile.ZipFile(template) as src, zipfile.ZipFile(tmp_path / "out.3mf") as out:
+        assert src.read(project.SETTINGS_ENTRY) == out.read(project.SETTINGS_ENTRY)

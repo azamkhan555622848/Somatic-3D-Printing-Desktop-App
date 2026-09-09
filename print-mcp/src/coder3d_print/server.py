@@ -89,6 +89,7 @@ def slice_model(
     use_aux_nozzle: bool = False,
     ams_mapping: dict | None = None,
     trays: list | None = None,
+    settings: dict | None = None,
 ) -> dict:
     """Slice a gated mesh into a printable job and run the Print Gate on it.
 
@@ -97,11 +98,20 @@ def slice_model(
     orthotic | load-bearing | surgical-guide | fixture. Both are required and
     neither is guessed: they decide whether the result is safe to print.
 
+    `settings` adjusts how the part is printed without opening Bambu Studio -
+    for example {"infill_density": 10, "infill_pattern": "lightning"} to use
+    less filament, or {"walls": 4} to make it stronger. Call
+    print_settings_available() for the full list. Everything else in the
+    template, the printer and filament included, is left exactly as the
+    operator set it. A request that would make a load-bearing part too thin is
+    refused rather than quietly clamped.
+
     A failed gate is reported as failed - the job file is left in place so the
     verdict can be read, but `ok` is false and it must not go to the printer.
     """
     from coder3d_print import ams as ams_mod
     from coder3d_print import gate as gate_mod
+    from coder3d_print import print_settings as settings_mod
     from coder3d_print import project, report, slicer
 
     case = Path(case_dir)
@@ -109,8 +119,19 @@ def slice_model(
     prints.mkdir(parents=True, exist_ok=True)
     staged = prints / f"{Path(mesh).stem}.project.3mf"
 
+    # Only consulted when something was asked for: an empty request must not
+    # turn an unknown intended_use into a settings error, because the gate is
+    # what reports that, with the rest of the verdict alongside it.
+    chosen = {"patch": {}, "applied": {}}
+    if settings:
+        try:
+            chosen = settings_mod.resolve(settings, intended_use)
+        except (settings_mod.UnsafeSetting, settings_mod.UnknownSetting) as exc:
+            return {"ok": False, "stage": "settings", "message": str(exc)}
+
     try:
-        built = project.build_from_template(Path(template), Path(mesh), staged)
+        built = project.build_from_template(Path(template), Path(mesh), staged,
+                                            overrides=chosen["patch"])
     except (project.TemplateInvalid, OSError) as exc:
         return {"ok": False, "stage": "template", "message": str(exc)}
 
@@ -150,6 +171,9 @@ def slice_model(
         "intended_use": intended_use,
         "use_aux_nozzle": use_aux_nozzle,
         "ams": plan,
+        # What was changed away from the template, so the Print View and the
+        # provenance record show it rather than an unexplained gram count.
+        "settings": chosen["applied"],
     })
     _write_json(prints / f"{stem}.layers.json", report.layer_preview(job))
 
@@ -162,7 +186,23 @@ def slice_model(
         "stats": verdict["stats"],
         "gate": verdict,
         "ams": plan,
+        "settings": chosen["applied"],
         "warnings": run.get("warnings", []),
+    }
+
+
+@mcp.tool
+def print_settings_available() -> dict:
+    """The print settings that can be adjusted, with their ranges and floors.
+
+    Densities and wall counts have a floor that depends on the part's intended
+    use: a display model may be hollowed out, a prosthetic or orthosis may not.
+    """
+    from coder3d_print import print_settings as settings_mod
+    return {
+        "settings": settings_mod.describe(),
+        "floors_by_category": settings_mod.FLOORS,
+        "layer_height_ceiling": settings_mod.LAYER_HEIGHT_CEILING,
     }
 
 

@@ -24,7 +24,36 @@ export type PrintStats = {
   material?: string
   intended_use?: string
   use_aux_nozzle?: boolean
+  /** Print settings changed away from the template for this job, if any. */
+  settings?: Record<string, number | string | boolean>
   gate?: { passed: boolean; checks?: Record<string, GateCheck> }
+}
+
+// What each adjustable setting is called on screen. The slicer's own key names
+// ("sparse_infill_density") are not what an operator reads a job by.
+const SETTING_LABELS: Record<string, string> = {
+  infill_density: "infill",
+  infill_pattern: "pattern",
+  walls: "walls",
+  layer_height: "layer",
+  supports: "supports",
+  top_layers: "top layers",
+  bottom_layers: "bottom layers",
+}
+
+/** One line naming what was changed, so a surprising weight has a visible cause. */
+export function formatSettings(settings: PrintStats["settings"]): string {
+  const entries = Object.entries(settings ?? {})
+  if (entries.length === 0) return ""
+  return entries
+    .map(([key, value]) => {
+      const label = SETTING_LABELS[key] ?? key
+      if (key === "infill_density") return `${label} ${value}%`
+      if (key === "layer_height") return `${label} ${value} mm`
+      if (typeof value === "boolean") return `${label} ${value ? "on" : "off"}`
+      return `${label} ${value}`
+    })
+    .join(", ")
 }
 
 export type PrintPath = { f: number; p: number[][] }

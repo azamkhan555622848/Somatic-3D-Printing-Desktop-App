@@ -8,6 +8,7 @@ import {
   failedChecks,
   featureLegend,
   formatGrams,
+  formatSettings,
   gateBadge,
   gateRemediation,
   initialLayerIndex,
@@ -206,5 +207,28 @@ describe("readStored", () => {
     localStorage.setItem("coder3d-test-bad", "{not json")
     expect(readStored("coder3d-test-bad", { a: 1 })).toEqual({ a: 1 })
     expect(readStored("coder3d-test-missing", "fallback")).toBe("fallback")
+  })
+})
+
+describe("formatSettings", () => {
+  test("nothing changed reads as nothing, so the row stays hidden", () => {
+    expect(formatSettings(undefined)).toBe("")
+    expect(formatSettings({})).toBe("")
+  })
+
+  test("names the change in the operator's words, not the slicer's keys", () => {
+    // "sparse_infill_density" is not what someone reads a job by.
+    expect(formatSettings({ infill_density: 8, infill_pattern: "lightning" })).toBe(
+      "infill 8%, pattern lightning",
+    )
+  })
+
+  test("carries the units that make a number mean something", () => {
+    expect(formatSettings({ layer_height: 0.16, walls: 4 })).toBe("layer 0.16 mm, walls 4")
+  })
+
+  test("a toggle reads as on or off", () => {
+    expect(formatSettings({ supports: true })).toBe("supports on")
+    expect(formatSettings({ supports: false })).toBe("supports off")
   })
 })

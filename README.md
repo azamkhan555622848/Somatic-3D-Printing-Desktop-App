@@ -61,8 +61,21 @@ cd opencode-dev && bun run dev:desktop  # Linux
 | `coder3d-medimage` | DICOM to NIfTI, segmentation, meshing |
 | `coder3d-cad` | parametric CAD (build123d), exports STL/GLB/3MF/STEP |
 | `coder3d-mesh` | inspection, repair, watertight checks |
-| `coder3d-print` | slicing through Bambu Studio, and the Print Gate |
+| `coder3d-print` | slicing through Bambu Studio, print settings, and the Print Gate |
 | `coder3d-claude` | routes design work to the agent |
+
+## Print settings
+
+Ask for an outcome and the agent changes the slice for you, without anyone
+opening Bambu Studio: "use less filament", "make it stronger", "turn supports
+off". It edits only the density-related settings, so the printer, filament and
+process stay exactly what the lab chose in the template.
+
+How thin a part may be made depends on what it is for. A display or teaching
+model can be hollowed out; a prosthetic, orthosis, surgical guide or other
+load-bearing part has floors it will not go under, and asking for less is
+refused with the reason rather than quietly rounded up. The Print Gate still
+runs on the result.
 
 ## Patient data
 

@@ -112,8 +112,16 @@ def place_on_plate(main_model: str, bed_center: tuple[float, float], height: flo
 
 
 def build_from_template(template: Path, mesh_path: Path, out_3mf: Path,
-                        bed_center: tuple[float, float] = (128.0, 128.0)) -> dict:
-    """Copy the template, replacing its single object with our mesh."""
+                        bed_center: tuple[float, float] = (128.0, 128.0),
+                        overrides: dict | None = None) -> dict:
+    """Copy the template, replacing its single object with our mesh.
+
+    `overrides` patches `project_settings.config` on the way through, which is
+    how a print is made denser or lighter without opening the GUI. Only keys
+    vetted by print_settings.resolve() should reach this - everything else in
+    the template, the printer and filament above all, is passed through
+    untouched so the profile stays what the operator chose.
+    """
     import trimesh
 
     template, mesh_path, out_3mf = Path(template), Path(mesh_path), Path(out_3mf)
@@ -134,6 +142,11 @@ def build_from_template(template: Path, mesh_path: Path, out_3mf: Path,
             elif name == MAIN_MODEL_ENTRY:
                 main = src.read(name).decode("utf-8")
                 dst.writestr(name, place_on_plate(main, bed_center, float(extents[2])))
+            elif name == SETTINGS_ENTRY and overrides:
+                import json
+                settings = json.loads(src.read(name).decode("utf-8"))
+                settings.update(overrides)
+                dst.writestr(name, json.dumps(settings, indent=4))
             elif name.startswith("Metadata/") and name.endswith(".png"):
                 continue  # stale thumbnails of the template's object
             else:
@@ -144,4 +157,5 @@ def build_from_template(template: Path, mesh_path: Path, out_3mf: Path,
         "process": info["process"],
         "filaments": info["filaments"],
         "size_mm": [round(float(v), 2) for v in extents],
+        "settings_changed": dict(overrides or {}),
     }

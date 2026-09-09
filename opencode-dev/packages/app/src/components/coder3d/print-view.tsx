@@ -13,6 +13,7 @@ import {
   gateRemediation,
   featureLegend,
   formatGrams,
+  formatSettings,
   gateBadge,
   initialLayerIndex,
   isValidHex,
@@ -410,6 +411,11 @@ export function PrintView(props: { dir: string; job: string; readFile: ReadFile 
           <Row label="Intended use" value={stats()?.intended_use ?? "—"} />
           <Show when={layers()?.layer_height_mm}>
             <Row label="Layer height" value={`${layers()!.layer_height_mm.toFixed(2)} mm`} />
+          </Show>
+          {/* Only when something was changed away from the template: it is the
+              reason the weight differs from what the profile alone would give. */}
+          <Show when={formatSettings(stats()?.settings)}>
+            <Row label="Adjusted" value={formatSettings(stats()?.settings)} />
           </Show>
         </dl>
 
