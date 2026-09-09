@@ -9,7 +9,9 @@
     localStorage.removeItem("opencode-theme-css-dark")
   }
 
-  var scheme = localStorage.getItem("opencode-color-scheme") || "system"
+  // Dark until the operator chooses otherwise (mirrors DEFAULT_COLOR_SCHEME
+  // in the theme context; keep the two in step).
+  var scheme = localStorage.getItem("opencode-color-scheme") || "dark"
   var isDark = scheme === "dark" || (scheme === "system" && matchMedia("(prefers-color-scheme: dark)").matches)
   var mode = isDark ? "dark" : "light"
 

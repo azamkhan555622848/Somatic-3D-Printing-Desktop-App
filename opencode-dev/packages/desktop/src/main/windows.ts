@@ -94,8 +94,12 @@ function iconPath() {
   return join(iconsDir(), `icon.${ext}`)
 }
 
-function tone() {
-  return nativeTheme.shouldUseDarkColors ? "dark" : "light"
+// The tone before the renderer has reported its theme. Somatic opens dark
+// regardless of the OS setting (the renderer defaults the same way), so the
+// first frame is not a white flash on a light desktop. Once the theme is
+// applied, setTitlebar/setBackgroundColor carry the real mode.
+function tone(): "light" | "dark" {
+  return "dark"
 }
 
 function defaultBackgroundColor() {
