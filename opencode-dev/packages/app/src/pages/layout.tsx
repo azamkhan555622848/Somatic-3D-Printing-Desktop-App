@@ -2118,6 +2118,7 @@ export default function LegacyLayout(props: ParentProps) {
                         <Button
                           size="large"
                           class="w-full"
+                          data-tour="sessions"
                           onClick={() => {
                             const dir = worktree()
                             if (!dir) return

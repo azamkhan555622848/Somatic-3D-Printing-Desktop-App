@@ -5,6 +5,7 @@ import { Icon } from "@opencode-ai/ui/v2/icon"
 import { KeybindV2 } from "@opencode-ai/ui/v2/keybind-v2"
 import { MODES, MODE_ORDER, type PanelMode } from "./panel-mode"
 import { DesignViewIcon, MedicalViewIcon, PrintViewIcon } from "./panel-icons"
+import { TOUR_EVENT } from "./onboarding/onboarding-steps"
 
 export function modeIcon(id: PanelMode, cls: string): JSX.Element {
   switch (id) {
@@ -37,6 +38,7 @@ export function Coder3dLauncher(props: {
           <button
             type="button"
             class="flex items-center gap-3 rounded-lg px-4 h-11 text-left bg-background-stronger-base hover:bg-background-strongest-base cursor-pointer border border-border-weaker-base"
+            data-tour="quickstart"
             onClick={() => props.onQuickStart!()}
           >
             <span class="shrink-0 flex items-center text-text-base">
@@ -83,6 +85,14 @@ export function Coder3dLauncher(props: {
             )
           }}
         </For>
+        {/* The tour shows itself once; this is how someone finds it again. */}
+        <button
+          type="button"
+          class="mt-2 self-center text-12-regular text-text-weak hover:text-text-base"
+          onClick={() => window.dispatchEvent(new Event(TOUR_EVENT))}
+        >
+          Show me around Somatic
+        </button>
       </div>
     </div>
   )

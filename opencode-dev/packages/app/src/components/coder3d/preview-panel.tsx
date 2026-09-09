@@ -549,7 +549,7 @@ export function Coder3dPreviewPanel(props: { terminal?: TerminalBridge }) {
           // component reaching into its siblings.
           style={{ width: expanded() ? "100%" : `${width()}px` }}
         >
-          <div class="flex items-center gap-1 px-2 h-8 shrink-0 border-b border-border-weaker-base">
+          <div class="flex items-center gap-1 px-2 h-8 shrink-0 border-b border-border-weaker-base" data-tour="views">
             {MODE_ORDER.map((id) => {
               const def = MODES[id]
               return (

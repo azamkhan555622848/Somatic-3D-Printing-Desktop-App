@@ -424,6 +424,7 @@ export function ClaudeChat(props: { sessionID?: string }) {
             "border-transparent hover:border-border-weaker-base hover:bg-background-stronger-base": !pickerOpen(),
           }}
           title="Choose the agent and model that run each turn"
+          data-tour="agent"
           aria-haspopup="menu"
           aria-expanded={pickerOpen()}
           onClick={() => setPickerOpen((open) => !open)}
@@ -734,7 +735,7 @@ export function ClaudeChat(props: { sessionID?: string }) {
               </For>
             </div>
           </Show>
-          <div class="flex items-end gap-2">
+          <div class="flex items-end gap-2" data-tour="composer">
             <textarea
               ref={inputEl}
               rows={2}
