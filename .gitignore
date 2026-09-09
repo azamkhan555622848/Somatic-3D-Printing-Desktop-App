@@ -1,0 +1,44 @@
+# --- Patient and case data -------------------------------------------------
+# Nothing derived from a scan belongs in this repository. Somatic is the tool;
+# the data stays in the lab. The one exception is the synthetic demo case, which
+# is generated geometry with no patient origin (re-included at the bottom).
+CAIPIRINHA_SPACE_MSK_Joints_Shoulder_Examples/
+workspace/cases/*
+!workspace/cases/demo/
+workspace/cases/demo/**/__pycache__/
+# Machine-owned provenance and identity, per spec 5.2.
+workspace/.coder3d/
+workspace/cases/.identity/
+# Sliced jobs and slicer templates are operator-specific.
+workspace/print-templates/
+
+# --- Generated build artifacts ---------------------------------------------
+# Only cad/*.py sources are tracked; meshes, STEP and manifests are rebuilt.
+workspace/cases/*/meshes/
+workspace/cases/*/prints/
+workspace/cases/*/cad/*.step
+workspace/cases/*/cad/*.manifest.json
+workspace/cases/*/.coder3d/
+
+# --- Python tool servers ---------------------------------------------------
+*/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# --- Node / Electron -------------------------------------------------------
+node_modules/
+opencode-dev/packages/*/dist/
+opencode-dev/packages/*/out/
+opencode-dev/packages/desktop/dist/
+opencode-dev/packages/desktop/resources/bin/
+# resources/icons is regenerated from icons/<channel> by copy-icons.ts.
+opencode-dev/packages/desktop/resources/icons/
+opencode-dev/packages/desktop/.icons-opencode-backup/
+opencode-dev/packages/desktop/.icons-src-opencode-backup/
+
+# --- Scratch and local state -----------------------------------------------
+scratch/
+*.log
+.DS_Store
+Thumbs.db

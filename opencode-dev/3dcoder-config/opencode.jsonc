@@ -1,0 +1,119 @@
+// 3D-Coder dev config — loaded via OPENCODE_CONFIG_DIR (see 3dcoder-dev.cmd).
+// V1 schema on purpose: the runtime consumes V1 (packages/opencode/src/mcp/index.ts).
+// Permission semantics: LAST matching rule wins (findLast) — broad rules first.
+{
+  "mcp": {
+    // ---- 3D-Coder servers ----
+    "coder3d-cad": {
+      "type": "local",
+      "command": [
+        "C:/Users/azamk/Documents/3D-Coder/cad-mcp/.venv/Scripts/python.exe",
+        "C:/Users/azamk/Documents/3D-Coder/cad-mcp/src/coder3d_cad/server.py"
+      ],
+      "enabled": true,
+      "timeout": 600000
+    },
+    "coder3d-mesh": {
+      "type": "local",
+      "command": [
+        "C:/Users/azamk/Documents/3D-Coder/mesh-mcp/.venv/Scripts/python.exe",
+        "C:/Users/azamk/Documents/3D-Coder/mesh-mcp/src/coder3d_mesh/server.py"
+      ],
+      "enabled": true,
+      "timeout": 600000
+    },
+    "coder3d-medimage": {
+      "type": "local",
+      "command": [
+        "C:/Users/azamk/Documents/3D-Coder/medimage-mcp/.venv/Scripts/python.exe",
+        "C:/Users/azamk/Documents/3D-Coder/medimage-mcp/src/coder3d_medimage/server.py"
+      ],
+      "enabled": true,
+      // Segmentation downloads weights on first run and can take minutes.
+      "timeout": 1800000
+    },
+    "coder3d-print": {
+      // Drives the Bambu Studio CLI headlessly. Slicing a large organ can run
+      // for minutes, so the timeout matches the medical lane's.
+      "type": "local",
+      "command": [
+        "C:/Users/azamk/Documents/3D-Coder/print-mcp/.venv/Scripts/python.exe",
+        "C:/Users/azamk/Documents/3D-Coder/print-mcp/src/coder3d_print/server.py"
+      ],
+      "enabled": true,
+      "timeout": 1800000
+    },
+    "coder3d-claude": {
+      // Delegate adapter: routes design tasks to Claude Opus via the locally
+      // authenticated Claude Code CLI (Max subscription). No tokens extracted —
+      // Claude Code itself remains the authenticated Anthropic application.
+      "type": "local",
+      "command": [
+        "C:/Users/azamk/Documents/3D-Coder/claude-mcp/.venv/Scripts/python.exe",
+        "C:/Users/azamk/Documents/3D-Coder/claude-mcp/src/coder3d_claude/server.py"
+      ],
+      "enabled": true,
+      "timeout": 1800000,
+      "environment": {
+        "CODER3D_SUBAGENT_MCP_CONFIG": "C:/Users/azamk/Documents/3D-Coder/opencode-dev/3dcoder-config/claude-subagent-mcp.json"
+      }
+    },
+    "blender": {
+      // ahujasid/blender-mcp — requires Blender (not installed yet) + its addon running.
+      // Flip enabled to true after following 3D-Coder/docs/INSTALL-blender.md.
+      "type": "local",
+      "command": ["uvx", "blender-mcp"],
+      "enabled": false,
+      "timeout": 600000
+    },
+
+    // ---- disable servers leaked from the machine-global ~/.config/opencode ----
+    "freecad": { "enabled": false },            // P4 revisits FreeCAD via our own addon
+    "kicad": { "enabled": false },
+    "partfetch": { "enabled": false },
+    "platformio": { "enabled": false },
+    "playwright": { "enabled": false },
+    "mongodb": { "enabled": false },
+    "thingsboard": { "enabled": false },
+    "embedded-debugger": { "enabled": false },
+    "stitch": { "enabled": false }
+  },
+  "permission": {
+    // suppress skills leaked from the global config (skills.paths + skill/ dirs)
+    "skill": {
+      "*": "allow",
+      "pcb-*": "deny",
+      "schematic-*": "deny",
+      "arduino-*": "deny",
+      "esp32-*": "deny",
+      "stm32-*": "deny",
+      "zephyr-*": "deny",
+      "*-for-iot": "deny",
+      "bun-file-io": "deny",
+      "flutter-expert": "deny",
+      "mobile-developer": "deny"
+    },
+    // Machine-owned case artifacts (spec §5.2): only medimage-mcp tool code
+    // writes these. references.bib pattern from Paperino. findLast: the
+    // allow-all comes first or the denies are shadowed and silently useless.
+    "edit": {
+      "*": "allow",
+      "*provenance.json": "deny",
+      "*meshes/qa*": "deny",
+      "*prints/qa*": "deny",
+      "*.identity*": "deny"
+    },
+    // A shell redirect would bypass the edit tool; ask makes it visible.
+    "bash": {
+      "*": "allow",
+      "*provenance.json*": "ask",
+      "*meshes/qa*": "ask",
+      "*prints/qa*": "ask",
+      "*.identity*": "ask"
+    }
+  },
+  "watcher": {
+    // keep the sidecar watcher out of our build dirs
+    "ignore": ["**/.coder3d/**"]
+  }
+}

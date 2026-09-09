@@ -1,0 +1,41 @@
+[project]
+name = "coder3d-medimage"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastmcp>=3.4.7",
+    "pydicom>=3.0.2",
+    "dcm2niix>=1.0.20260724",
+    "SimpleITK>=2.5.6",
+    "vtk>=9.6.2",
+    "trimesh>=5.0.0",
+    # trimesh.proximity.thickness needs the rtree spatial index (P1's networkx lesson)
+    "rtree>=1.2",
+    "numpy>=1.26",
+    "scipy>=1.13",
+    "totalsegmentator>=2.18.0",
+    # torch must be DECLARED for the uv source pin below to apply (transitive
+    # deps ignore tool.uv.sources) — first sync landed 2.13.0+cpu without this.
+    "torch>=2.13.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu130" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/coder3d_medimage"]

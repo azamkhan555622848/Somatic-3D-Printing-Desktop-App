@@ -1,0 +1,25 @@
+[project]
+name = "coder3d-print"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastmcp>=3.4.7",
+    "trimesh>=5.0.0",
+    # trimesh's 3MF path needs both of these; neither is a declared trimesh dep
+    "networkx>=3",
+    "lxml>=5",
+    "numpy>=1.26",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/coder3d_print"]

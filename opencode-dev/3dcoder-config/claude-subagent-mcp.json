@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "cad": {
+      "command": "C:/Users/azamk/Documents/3D-Coder/cad-mcp/.venv/Scripts/python.exe",
+      "args": ["C:/Users/azamk/Documents/3D-Coder/cad-mcp/src/coder3d_cad/server.py"]
+    },
+    "mesh": {
+      "command": "C:/Users/azamk/Documents/3D-Coder/mesh-mcp/.venv/Scripts/python.exe",
+      "args": ["C:/Users/azamk/Documents/3D-Coder/mesh-mcp/src/coder3d_mesh/server.py"]
+    },
+    "medimage": {
+      "command": "C:/Users/azamk/Documents/3D-Coder/medimage-mcp/.venv/Scripts/python.exe",
+      "args": ["C:/Users/azamk/Documents/3D-Coder/medimage-mcp/src/coder3d_medimage/server.py"]
+    },
+    "print": {
+      "command": "C:/Users/azamk/Documents/3D-Coder/print-mcp/.venv/Scripts/python.exe",
+      "args": ["C:/Users/azamk/Documents/3D-Coder/print-mcp/src/coder3d_print/server.py"]
+    }
+  }
+}
