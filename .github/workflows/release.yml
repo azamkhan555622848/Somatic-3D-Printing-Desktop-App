@@ -17,7 +17,9 @@ permissions:
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: false
+  # A newer run supersedes an older one on the same ref. Without this, one
+  # job waiting on a scarce runner held every later run at "pending".
+  cancel-in-progress: true
 
 env:
   # Only the dev channel bundles the opencode-cli sidecar, so it is the only
@@ -54,6 +56,7 @@ jobs:
     needs: verify
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    continue-on-error: ${{ matrix.optional || false }}
     strategy:
       fail-fast: false
       matrix:
@@ -61,7 +64,10 @@ jobs:
           - { os: windows-latest, target: win,   label: Windows x64,          root: "D:/s" }
           - { os: ubuntu-latest,  target: linux, label: Linux x64,            root: s }
           - { os: macos-14,       target: mac,   label: macOS Apple Silicon,  root: s }
-          - { os: macos-13,       target: mac,   label: macOS Intel,          root: s }
+          # macos-13 is retired and never gets a runner. Intel Macs are the
+          # minority in a lab, so this leg is allowed to fail without blocking
+          # the release; the other three installers still publish.
+          - { os: macos-15-intel, target: mac,   label: macOS Intel,          root: s, optional: true }
     env:
       # No signing certificate in this repository: skip the lookup rather than
       # fail on it. Windows signing already skips itself without Azure secrets.
