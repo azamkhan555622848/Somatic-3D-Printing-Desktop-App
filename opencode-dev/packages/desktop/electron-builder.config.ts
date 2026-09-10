@@ -59,7 +59,7 @@ const getBase = (appId: string): Configuration => ({
   extraMetadata: {
     desktopName: `${appId}.desktop`,
   },
-  files: ["out/**/*", "resources/**/*", "!resources/opencode-cli*"],
+  files: ["out/**/*", "resources/**/*", "!resources/opencode-cli*", "!resources/tools", "!resources/uv"],
   extraResources: [
     ...(channel === "dev"
       ? [
@@ -70,6 +70,10 @@ const getBase = (appId: string): Configuration => ({
           },
         ]
       : []),
+    // Unpacked on purpose: uv has to execute, and python has to read the
+    // server sources by path. Neither works from inside the asar.
+    { from: "resources/tools", to: "tools" },
+    { from: "resources/uv", to: "uv" },
     {
       from: "native/",
       to: "native/",

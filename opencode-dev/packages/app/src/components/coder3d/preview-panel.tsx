@@ -19,6 +19,7 @@ import { CaseNavigator, CaseOverview } from "./case-navigator"
 import { prefillComposer } from "./claude-chat/claude-chat"
 import { FilePreview, type FilePreviewState } from "./file-preview"
 import { Coder3dLauncher, modeIcon } from "./launcher"
+import { ToolOffer, hasTool } from "./tool-setup"
 import { MedicalView } from "./medical-view"
 import { BambuStudioIcon, BlenderIcon, CollapseDiagonalIcon, ExpandDiagonalIcon, FreeCADIcon } from "./panel-icons"
 import {
@@ -693,6 +694,10 @@ export function Coder3dPreviewPanel(props: { terminal?: TerminalBridge }) {
               keyed
               fallback={
                 <div class="flex-1 min-h-0 flex items-center justify-center px-8">
+                  {/* Imaging is the one tool not installed up front - it is the
+                      largest by far. Offer it here, where a scan would be
+                      opened, rather than making everyone wait for it. */}
+                  <Show when={hasTool("imaging")} fallback={<ToolOffer id="imaging" title="Medical imaging is not installed yet" />}>
                   <div class="flex flex-col items-center gap-3 max-w-72">
                     <div class="text-12-regular text-text-weak text-center">
                       No scan open. A DICOM folder is converted to NIfTI on import, so the viewer always opens a
@@ -721,6 +726,7 @@ export function Coder3dPreviewPanel(props: { terminal?: TerminalBridge }) {
                       {(hint) => <div class="text-11-regular text-text-weak text-center">{hint()}</div>}
                     </Show>
                   </div>
+                  </Show>
                 </div>
               }
             >

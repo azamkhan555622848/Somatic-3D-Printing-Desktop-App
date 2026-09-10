@@ -2,6 +2,7 @@ import type { FilePart, Project, UserMessage, VcsFileDiff } from "@opencode-ai/s
 import { ClaudeChat, useChatBackend } from "@/components/coder3d/claude-chat/claude-chat"
 import { Coder3dPreviewPanel } from "@/components/coder3d/preview-panel"
 import { Onboarding } from "@/components/coder3d/onboarding/onboarding"
+import { ToolSetup } from "@/components/coder3d/tool-setup"
 import { getFilename } from "@opencode-ai/core/util/path"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { createQuery, skipToken, useMutation, useQueryClient } from "@tanstack/solid-query"
@@ -2325,6 +2326,8 @@ export default function Page() {
         <Coder3dPreviewPanel terminal={{ opened: terminalOpen, toggle: () => view().terminal.toggle() }} />
         {/* First-run welcome + tour. Portals to body, so where it sits here is immaterial. */}
         <Onboarding />
+        {/* Builds the Python tool environments on first launch. Also portals. */}
+        <ToolSetup />
       </div>
 
       <Show when={!newSessionDesign()}>

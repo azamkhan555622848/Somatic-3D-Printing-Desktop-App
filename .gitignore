@@ -48,3 +48,9 @@ Thumbs.db
 # servers by absolute path, so it cannot be shared between machines.
 opencode-dev/3dcoder-config/opencode.jsonc
 opencode-dev/3dcoder-config/claude-subagent-mcp.json
+
+# --- Generated at build time by packages/desktop/scripts/copy-tools.ts ------
+# The Python tool sources are copied here and uv is downloaded here so
+# electron-builder can ship them. Both are reproducible; neither is source.
+opencode-dev/packages/desktop/resources/tools/
+opencode-dev/packages/desktop/resources/uv/

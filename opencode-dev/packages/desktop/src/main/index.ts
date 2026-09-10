@@ -44,7 +44,7 @@ import {
 } from "./windows"
 import { createWslServersController } from "./wsl/servers"
 import { registerWslIpcHandlers } from "./wsl/ipc"
-import { registerCoder3dIpc } from "./coder3d/ipc"
+import { refreshToolConfig, registerCoder3dIpc } from "./coder3d/ipc"
 import { spawnWslSidecar } from "./wsl/sidecar"
 import { migrate } from "./migrate"
 import { cleanupStoreFiles } from "./store-cleanup"
@@ -334,6 +334,14 @@ const main = Effect.gen(function* () {
   })
   registerWslIpcHandlers(wslServers)
   registerCoder3dIpc()
+  // Name the tool environments that exist before the first session reads the
+  // server list. Missing ones are simply absent, which is what lets the app
+  // offer to build them rather than fail to spawn them.
+  try {
+    refreshToolConfig()
+  } catch (error) {
+    logger.error("could not write the tool config", { error: String(error) })
+  }
   void updater.start()
   const updateTimer = setInterval(() => void updater.check(), 10 * 60 * 1000)
   updateTimer.unref()

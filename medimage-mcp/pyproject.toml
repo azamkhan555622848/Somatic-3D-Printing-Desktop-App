@@ -22,13 +22,18 @@ dependencies = [
 [dependency-groups]
 dev = ["pytest>=8"]
 
+# CPU torch, deliberately. The CUDA build is 2.8 GB against roughly 200 MB,
+# and it only helps a machine with an NVIDIA card - which no Mac has, and most
+# lab laptops do not either. A workstation that wants the GPU build installs it
+# over the top:
+#   uv pip install --python <env> --index https://download.pytorch.org/whl/cu130 torch
 [[tool.uv.index]]
-name = "pytorch-cu130"
-url = "https://download.pytorch.org/whl/cu130"
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
 [tool.uv.sources]
-torch = { index = "pytorch-cu130" }
+torch = { index = "pytorch-cpu" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

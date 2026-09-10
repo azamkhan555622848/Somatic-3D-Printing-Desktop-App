@@ -53,6 +53,27 @@ export type Coder3dListFilesResult = { files: string[]; truncated: boolean }
 export type Coder3dReadFileResult =
   | { ok: true; bytes: Uint8Array }
   | { ok: false; error: "invalid-path" | "not-found" | "too-large" }
+/** Mirror of main/coder3d/toolchain.ts. A tool absent here is not installed. */
+export type ToolSummary = { id: string; label: string; megabytes: number; purpose: string }
+
+export type ToolchainState = {
+  installed: string[]
+  /** Missing and required before the app can do its work. */
+  missingCore: ToolSummary[]
+  /** Missing but fetched on its own afterwards. */
+  missingBackground: ToolSummary[]
+  megabytesAhead: number
+}
+
+export type ToolchainProgress =
+  | { kind: "start"; tool: string; label: string; megabytes: number }
+  | { kind: "step"; tool: string; label: string; percent: number }
+  | { kind: "log"; tool: string; line: string }
+  | { kind: "done"; tool: string }
+  | { kind: "error"; tool: string; message: string }
+
+export type ToolchainInstallResult = { ok: boolean; installed: string[]; error?: string }
+
 // Mirror of main/coder3d/claude-chat-protocol.ts ClaudeChatEvent — preload
 // cannot import from the main bundle, so the union is declared on both sides.
 export type Coder3dClaudeEvent =
@@ -105,6 +126,13 @@ export type Coder3dAPI = {
   onStatus: (cb: (status: Coder3dStatus) => void) => () => void
   onArtifact: (cb: (absPath: string) => void) => () => void
   listFiles: (dir: string) => Promise<Coder3dListFilesResult>
+  toolchainState: () => Promise<ToolchainState>
+  /** Build the given environments, or every missing core one when omitted. */
+  installTools: (ids?: string[]) => Promise<ToolchainInstallResult>
+  /** Fetch what was deferred to the background, such as mesh. */
+  catchUpTools: () => Promise<ToolchainInstallResult>
+  onToolchainProgress: (fn: (event: ToolchainProgress) => void) => () => void
+  onToolchainState: (fn: (state: ToolchainState) => void) => () => void
   readFile: (dir: string, relPath: string) => Promise<Coder3dReadFileResult>
   /** Absolute path of a folder the user chose, or undefined if they cancelled. */
   pickFolder: (title?: string) => Promise<string | undefined>

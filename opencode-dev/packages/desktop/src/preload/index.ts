@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron"
-import type { Coder3dClaudeEvent, Coder3dStatus, ElectronAPI, WslServersEvent } from "./types"
+import type { Coder3dClaudeEvent, Coder3dStatus, ElectronAPI, ToolchainProgress, ToolchainState, WslServersEvent } from "./types"
 import type { UpdaterState } from "@opencode-ai/app/updater"
 
 const updaterCallbacks = new Set<(state: UpdaterState) => void>()
@@ -23,6 +23,19 @@ const api: ElectronAPI = {
       const handler = (_: unknown, absPath: string) => cb(absPath)
       ipcRenderer.on("coder3d-artifact", handler)
       return () => ipcRenderer.removeListener("coder3d-artifact", handler)
+    },
+    toolchainState: () => ipcRenderer.invoke("coder3d-toolchain-state"),
+    installTools: (ids) => ipcRenderer.invoke("coder3d-toolchain-install", ids),
+    catchUpTools: () => ipcRenderer.invoke("coder3d-toolchain-catch-up"),
+    onToolchainProgress: (fn) => {
+      const handler = (_e: unknown, value: ToolchainProgress) => fn(value)
+      ipcRenderer.on("coder3d-toolchain-progress", handler)
+      return () => ipcRenderer.removeListener("coder3d-toolchain-progress", handler)
+    },
+    onToolchainState: (fn) => {
+      const handler = (_e: unknown, value: ToolchainState) => fn(value)
+      ipcRenderer.on("coder3d-toolchain-state", handler)
+      return () => ipcRenderer.removeListener("coder3d-toolchain-state", handler)
     },
     listFiles: (dir) => ipcRenderer.invoke("coder3d-list-files", dir),
     readFile: (dir, relPath) => ipcRenderer.invoke("coder3d-read-file", dir, relPath),

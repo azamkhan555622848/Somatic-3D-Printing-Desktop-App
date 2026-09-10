@@ -25,16 +25,32 @@ the chat says which one and what to run.
 
 | Need | Why |
 |---|---|
-| [Bun](https://bun.sh) | builds and runs the desktop app |
-| [uv](https://docs.astral.sh/uv/) + Python 3.12 | the five tool servers |
-| [Node.js](https://nodejs.org) | generates the machine-local config |
-| [Claude Code](https://claude.com/claude-code) or [Codex](https://developers.openai.com/codex/cli) | at least one, signed in |
+| [Claude Code](https://claude.com/claude-code) or [Codex](https://developers.openai.com/codex/cli) | at least one, signed in - the chat runs on your subscription |
 | [Bambu Studio](https://bambulab.com/en/download/studio) | slicing and the Print Gate |
 | [Blender](https://www.blender.org/download/) / [FreeCAD](https://www.freecad.org/downloads.php) | optional, for inspecting a model |
 
-Windows and Linux are supported. macOS is not built yet.
+Nothing else. Somatic builds its own Python tool environments on first launch,
+and fetches its own Python to do it. Windows, Linux, and macOS on both Apple
+Silicon and Intel.
 
-## Setup
+## Installing
+
+Download the installer for your platform from
+[Releases](https://github.com/azamkhan555622848/Somatic-3D-Printing-Desktop-App/releases),
+run it, and open it. The first launch spends a few minutes building the tools
+it designs and slices with, about 830 MB, and says what it is doing.
+
+Mesh inspection downloads by itself straight afterwards. Medical imaging is the
+large one, roughly 1.3 GB, so it waits until you open a scan and then offers
+itself - the same way the Blender and Bambu Studio buttons do.
+
+On macOS the build is not signed yet, so the first open needs
+**right-click, then Open**, or Open Anyway under Privacy and Security.
+
+## Working on Somatic
+
+Building it, rather than using it, needs [Bun](https://bun.sh),
+[uv](https://docs.astral.sh/uv/) and [Node.js](https://nodejs.org):
 
 ```powershell
 git clone https://github.com/azamkhan555622848/Somatic-3D-Printing-Desktop-App.git
@@ -43,16 +59,17 @@ cd Somatic-3D-Printing-Desktop-App
 ./setup.sh           # Linux
 ```
 
-Setup creates the five Python environments and writes the opencode config for
-your machine. That config is generated, not tracked, because the tool servers
-are launched by absolute path — re-run setup if you move the repository.
-
-Then start it:
+Setup creates the five Python environments inside the checkout and writes the
+opencode config for them. A development run uses those rather than provisioning
+its own, so it costs nothing extra. Then:
 
 ```powershell
 .\opencode-dev\3dcoder-dev.cmd        # Windows
 cd opencode-dev && bun run dev:desktop  # Linux
 ```
+
+`SOMATIC_FORCE_TOOLCHAIN=1` makes a checkout take the first-run path instead,
+which is how to see what a lab member sees.
 
 ## The five tool servers
 
