@@ -58,13 +58,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: windows-latest, target: win,   label: Windows x64 }
-          - { os: ubuntu-latest,  target: linux, label: Linux x64 }
-          - { os: macos-14,       target: mac,   label: macOS Apple Silicon }
-          - { os: macos-13,       target: mac,   label: macOS Intel }
-    defaults:
-      run:
-        working-directory: s/opencode-dev/packages/desktop
+          - { os: windows-latest, target: win,   label: Windows x64,          root: "W:" }
+          - { os: ubuntu-latest,  target: linux, label: Linux x64,            root: s }
+          - { os: macos-14,       target: mac,   label: macOS Apple Silicon,  root: s }
+          - { os: macos-13,       target: mac,   label: macOS Intel,          root: s }
     env:
       # No signing certificate in this repository: skip the lookup rather than
       # fail on it. Windows signing already skips itself without Azure secrets.
@@ -74,19 +71,20 @@ jobs:
       # small for that and the build dies with an out-of-memory abort.
       NODE_OPTIONS: --max-old-space-size=6144
     steps:
-      # Checked out into a two-letter directory on purpose. The runner's
-      # workspace already repeats the repository name, and bun's isolated
-      # node_modules layout on top of that pushed a native build past
-      # Windows' 260-character path limit (MSVC C1258).
       - uses: actions/checkout@v4
         with:
           path: s
-      - name: Windows long paths
+      # The runner's workspace already repeats the repository name, and bun's
+      # isolated node_modules layout on top of that pushed a native build past
+      # Windows' 260-character path limit (MSVC C1258). Mapping the checkout
+      # to a drive letter takes about 70 characters off every path beneath
+      # it; enabling long-paths mode on its own did not satisfy that compiler.
+      - name: Map the checkout to drive W
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Set-ItemProperty -Path 'HKLM:/SYSTEM/CurrentControlSet/Control/FileSystem' -Name LongPathsEnabled -Value 1
-          git config --system core.longpaths true
+          subst W: (Resolve-Path "$env:GITHUB_WORKSPACE/s").Path
+          Get-ChildItem W:/ | Select-Object -First 3 | Format-Table Name
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
@@ -94,12 +92,14 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq rpm fakeroot
       - run: bun install --frozen-lockfile
-        working-directory: s/opencode-dev
+        working-directory: ${{ matrix.root }}/opencode-dev
       # `build` runs the prebuild, which downloads this platform's sidecar.
       - name: Build
         run: bun run build
+        working-directory: ${{ matrix.root }}/opencode-dev/packages/desktop
       - name: Package
         run: bun run package:${{ matrix.target }}
+        working-directory: ${{ matrix.root }}/opencode-dev/packages/desktop
       - uses: actions/upload-artifact@v4
         with:
           name: somatic-${{ matrix.os }}
