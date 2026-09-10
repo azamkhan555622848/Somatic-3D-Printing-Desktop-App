@@ -69,6 +69,10 @@ jobs:
       # No signing certificate in this repository: skip the lookup rather than
       # fail on it. Windows signing already skips itself without Azure secrets.
       CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      # electron-vite inlines packages/opencode's 460k-line node bundle into the
+      # main process. On the 7 GB macOS runners Node's default heap is too
+      # small for that and the build dies with an out-of-memory abort.
+      NODE_OPTIONS: --max-old-space-size=6144
     steps:
       # Checked out into a two-letter directory on purpose. The runner's
       # workspace already repeats the repository name, and bun's isolated
