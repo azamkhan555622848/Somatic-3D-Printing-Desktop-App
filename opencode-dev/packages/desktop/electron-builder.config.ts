@@ -35,6 +35,10 @@ const channel = (() => {
   return "dev"
 })()
 
+// A real Developer ID certificate is configured only when the Apple secrets
+// are present. Everything below that depends on signing keys off this.
+const appleSigning = !!process.env.APPLE_TEAM_ID
+
 const APP_IDS = {
   dev: "ai.opencode.desktop.dev",
   beta: "ai.opencode.desktop.beta",
@@ -75,14 +79,18 @@ const getBase = (appId: string): Configuration => ({
   mac: {
     category: "public.app-category.developer-tools",
     icon: `resources/icons/icon.icns`,
-    hardenedRuntime: true,
+    // Apple Silicon will not run a binary carrying no signature at all: the app
+    // opens as "damaged", not as "unidentified developer", and no amount of
+    // right-click gets past it. So without a certificate the build still signs,
+    // ad-hoc, which is what the kernel actually requires. Hardened runtime has
+    // to come off alongside it - it enforces a library validation that an
+    // ad-hoc signature cannot satisfy, and the app would fail to launch.
+    identity: appleSigning ? undefined : "-",
+    hardenedRuntime: appleSigning,
     gatekeeperAssess: false,
     entitlements: "resources/entitlements.plist",
     entitlementsInherit: "resources/entitlements.plist",
-    // Only when Apple credentials are present (APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD,
-    // APPLE_TEAM_ID). Without them the build ships unsigned and testers open it
-    // with right-click -> Open once; with them it notarizes as before.
-    notarize: !!process.env.APPLE_TEAM_ID,
+    notarize: appleSigning,
     target: ["dmg", "zip"],
   },
   dmg: {
