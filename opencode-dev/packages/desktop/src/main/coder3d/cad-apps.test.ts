@@ -2,6 +2,12 @@ import { afterEach, describe, expect, test } from "bun:test"
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
+// Expected paths are built with the same join the code uses. On Linux, where
+// CI runs, join uses forward slashes, so a backslash literal never matches and
+// an ordering assertion quietly compares -1 with -1.
+const blenderExe = (v: string) => join("C:\\Program Files\\Blender Foundation", `Blender ${v}`, "blender.exe")
+const freecadExe = (v: string) => join("C:\\Program Files", `FreeCAD ${v}`, "bin", "freecad.exe")
 import {
   CAD_APP_DOWNLOADS,
   blenderArgs,
@@ -28,13 +34,11 @@ describe("candidates", () => {
 
   test("versioned install folders are scanned newest-first", () => {
     const blender = blenderCandidates({}, listDir)
-    expect(blender.indexOf("C:\\Program Files\\Blender Foundation\\Blender 4.5\\blender.exe")).toBeLessThan(
-      blender.indexOf("C:\\Program Files\\Blender Foundation\\Blender 3.6\\blender.exe"),
-    )
+    expect(blender.indexOf(blenderExe("4.5"))).toBeGreaterThanOrEqual(0)
+    expect(blender.indexOf(blenderExe("4.5"))).toBeLessThan(blender.indexOf(blenderExe("3.6")))
     const freecad = freecadCandidates({}, listDir)
-    expect(freecad.indexOf("C:\\Program Files\\FreeCAD 1.0\\bin\\freecad.exe")).toBeLessThan(
-      freecad.indexOf("C:\\Program Files\\FreeCAD 0.21\\bin\\freecad.exe"),
-    )
+    expect(freecad.indexOf(freecadExe("1.0"))).toBeGreaterThanOrEqual(0)
+    expect(freecad.indexOf(freecadExe("1.0"))).toBeLessThan(freecad.indexOf(freecadExe("0.21")))
     expect(freecad.some((c) => c.includes("Bambu") || c.includes("Git"))).toBe(false)
   })
 
