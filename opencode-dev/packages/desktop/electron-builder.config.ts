@@ -57,6 +57,10 @@ const getBase = (appId: string): Configuration => ({
   // https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html
   // https://www.electron.build/docs/linux/
   extraMetadata: {
+    // The install directory and Electron's default userData both derive from
+    // this, and "@opencode-ai/desktop" produced a folder called
+    // "@opencode-aidesktop". userData is pinned to the app id regardless.
+    name: "somatic",
     desktopName: `${appId}.desktop`,
   },
   files: ["out/**/*", "resources/**/*", "!resources/opencode-cli*", "!resources/tools", "!resources/uv"],

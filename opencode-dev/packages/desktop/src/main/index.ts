@@ -126,21 +126,6 @@ const main = Effect.gen(function* () {
 
   process.env.OPENCODE_DISABLE_EMBEDDED_WEB_UI = "true"
 
-  // A packaged Somatic ships its own MCP servers and must not inherit the
-  // operator's personal opencode setup. Config.loadGlobal() merges
-  // XDG_CONFIG_HOME/opencode unconditionally — OPENCODE_CONFIG_DIR does not
-  // replace it — which is how blender, kicad, playwright, thingsboard and the
-  // rest of a developer's machine showed up in the server list. Pointing the
-  // XDG root at our own directory gives the build an empty global config to
-  // merge, so only Somatic's servers remain.
-  // Dev is deliberately left alone: it is where those extra servers are
-  // wanted, and moving the config root would hide an existing sign-in.
-  if (app.isPackaged) {
-    const configHome = join(app.getPath("userData"), "opencode-config")
-    mkdirSync(join(configHome, "opencode"), { recursive: true })
-    process.env.XDG_CONFIG_HOME = configHome
-  }
-
   const appId = app.isPackaged ? APP_IDS[CHANNEL] : "ai.opencode.desktop.dev"
   const onboardingTestRoot = ((): string | undefined => {
     if (!TEST_ONBOARDING) return
@@ -166,6 +151,27 @@ const main = Effect.gen(function* () {
     onboardingTestRoot ? join(onboardingTestRoot, "desktop") : join(app.getPath("appData"), appId),
   )
   if (onboardingTestRoot) app.setPath("sessionData", join(onboardingTestRoot, "session"))
+
+  // A packaged Somatic ships its own MCP servers and must not inherit the
+  // operator's personal opencode setup. Config.loadGlobal() merges
+  // XDG_CONFIG_HOME/opencode unconditionally — OPENCODE_CONFIG_DIR does not
+  // replace it — which is how blender, kicad, playwright, thingsboard and the
+  // rest of a developer's machine showed up in the server list. Pointing the
+  // XDG root at our own directory gives the build an empty global config to
+  // merge, so only Somatic's servers remain.
+  //
+  // This has to come AFTER userData is pinned above. Electron's default
+  // userData is derived from the npm package name, and reading it earlier sent
+  // the sidecar to "@opencode-ai/desktop/opencode-config" while the app wrote
+  // its tool config under the app id - a perfectly good config on disk and
+  // "No MCPs configured" on screen. The onboarding test root sets its own
+  // XDG_CONFIG_HOME and is left alone. Dev is left alone too: it is where the
+  // extra servers are wanted, and moving its config root would hide a sign-in.
+  if (app.isPackaged && !onboardingTestRoot) {
+    const configHome = join(app.getPath("userData"), "opencode-config")
+    mkdirSync(join(configHome, "opencode"), { recursive: true })
+    process.env.XDG_CONFIG_HOME = configHome
+  }
   initializeOldLayoutEligibility(app.getPath("userData"))
   logger = initLogging()
   initCrashReporter()
