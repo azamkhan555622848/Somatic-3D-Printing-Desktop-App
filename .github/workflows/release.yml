@@ -1,0 +1,115 @@
+# Build Somatic for Windows, Linux and macOS, and publish a release on a tag.
+#
+#   git tag v0.1.0-alpha && git push origin v0.1.0-alpha
+#
+# A manual run (workflow_dispatch) builds and uploads artifacts without
+# publishing, which is the way to check a change before tagging it.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Only the dev channel bundles the opencode-cli sidecar, so it is the only
+  # channel whose package starts (see RELEASING.md). It is set explicitly
+  # because one build script otherwise reads the channel from the current git
+  # branch, and a tag checkout has no branch.
+  OPENCODE_CHANNEL: dev
+
+jobs:
+  verify:
+    name: Typecheck and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: opencode-dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - name: Typecheck the app
+        run: bunx tsc --noEmit -p packages/app/tsconfig.json
+      - name: App unit tests
+        run: bun run test:unit
+        working-directory: opencode-dev/packages/app
+      - name: Desktop unit tests
+        run: bun test src/main/coder3d/
+        working-directory: opencode-dev/packages/desktop
+
+  build:
+    name: Package ${{ matrix.label }}
+    needs: verify
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, target: win,   label: Windows x64 }
+          - { os: ubuntu-latest,  target: linux, label: Linux x64 }
+          - { os: macos-14,       target: mac,   label: macOS Apple Silicon }
+          - { os: macos-13,       target: mac,   label: macOS Intel }
+    defaults:
+      run:
+        working-directory: opencode-dev/packages/desktop
+    env:
+      # No signing certificate in this repository: skip the lookup rather than
+      # fail on it. Windows signing already skips itself without Azure secrets.
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Linux packaging tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq rpm fakeroot
+      - run: bun install --frozen-lockfile
+        working-directory: opencode-dev
+      # `build` runs the prebuild, which downloads this platform's sidecar.
+      - name: Build
+        run: bun run build
+      - name: Package
+        run: bun run package:${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: somatic-${{ matrix.os }}
+          if-no-files-found: error
+          path: |
+            opencode-dev/packages/desktop/dist/somatic-*
+            !opencode-dev/packages/desktop/dist/*.blockmap
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - run: ls -la artifacts
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" artifacts/* \
+            --repo "${{ github.repository }}" \
+            --title "Somatic ${{ github.ref_name }}" \
+            --generate-notes \
+            --prerelease

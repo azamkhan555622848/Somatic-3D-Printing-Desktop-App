@@ -77,3 +77,23 @@ The cost is cosmetic: the dev channel is named "Somatic Dev" and installs under
 the app id `ai.opencode.desktop.dev`. Shipping `prod` instead would mean
 bundling the sidecar for every channel, and would move the app id — which is
 what keys `userData`, so existing sessions and settings would be orphaned.
+
+## The easy way: GitHub Actions
+
+`.github/workflows/release.yml` builds all four installers on GitHub's own
+runners — Windows, Linux, and macOS for both Apple Silicon and Intel — and
+attaches them to a pre-release. The repository is public, so the macOS runners
+cost nothing.
+
+```bash
+git tag v0.1.0-alpha
+git push origin v0.1.0-alpha
+```
+
+Run the workflow by hand (Actions → Release → Run workflow) to build without
+publishing; the artifacts appear on the run page.
+
+The macOS builds are unsigned unless `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`
+and `APPLE_TEAM_ID` are set as repository secrets, which needs an Apple
+Developer account. Unsigned, a tester opens the app the first time with
+right-click → Open, or `xattr -dr com.apple.quarantine Somatic\ Dev.app`.

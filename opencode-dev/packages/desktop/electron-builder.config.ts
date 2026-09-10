@@ -79,7 +79,10 @@ const getBase = (appId: string): Configuration => ({
     gatekeeperAssess: false,
     entitlements: "resources/entitlements.plist",
     entitlementsInherit: "resources/entitlements.plist",
-    notarize: true,
+    // Only when Apple credentials are present (APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD,
+    // APPLE_TEAM_ID). Without them the build ships unsigned and testers open it
+    // with right-click -> Open once; with them it notarizes as before.
+    notarize: !!process.env.APPLE_TEAM_ID,
     target: ["dmg", "zip"],
   },
   dmg: {
