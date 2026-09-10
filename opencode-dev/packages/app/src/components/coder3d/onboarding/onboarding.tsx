@@ -3,6 +3,7 @@ import { Portal } from "solid-js/web"
 import {
   TOUR_EVENT,
   WELCOME_SLIDES,
+  slideCopy,
   hasSeenOnboarding,
   markOnboardingSeen,
   nextSlide,
@@ -201,9 +202,21 @@ export function Onboarding() {
               aria-labelledby="so-headline"
               data-slide={slide()}
             >
-              <div class="so-enter" data-key={slide()}>
-                <Slide id={slide()} />
-              </div>
+              {/* Keyed: the children are re-created when the slide changes.
+                  Without that the card is built once and never updates, which
+                  is what made Next appear to do nothing. It also replays the
+                  entrance animation, which had been silently dead too. */}
+              <Show when={slideCopy(slide())} keyed>
+                {(copy) => (
+                  <div class="so-enter">
+                    <SlideFrame vignette={VIGNETTES[copy.id]()} headline={copy.headline}>
+                      <For each={copy.body}>
+                        {(text, i) => <p class={i() === copy.muted ? "so-muted" : undefined}>{text}</p>}
+                      </For>
+                    </SlideFrame>
+                  </div>
+                )}
+              </Show>
               <div class="so-footer">
                 <Dots count={WELCOME_SLIDES.length} current={WELCOME_SLIDES.indexOf(slide())} />
                 <div class="so-actions">
@@ -308,49 +321,12 @@ function Dots(props: { count: number; current: number }) {
   )
 }
 
-function Slide(props: { id: WelcomeSlide }) {
-  switch (props.id) {
-    case "welcome":
-      return (
-        <SlideFrame vignette={<MarkVignette />} headline="Welcome to Somatic">
-          <p>
-            From a patient scan to a part that is safe to print, in one window. Import the scan, build the part as
-            CAD, check the mesh, slice it, and pass the Print Gate before anything reaches the printer.
-          </p>
-          <p class="so-muted">This is an alpha for the lab. Nothing it produces is a medical device.</p>
-        </SlideFrame>
-      )
-    case "path":
-      return (
-        <SlideFrame vignette={<PathVignette />} headline="One path, four views">
-          <p>
-            Medical reads the scan and segments it. Design builds and inspects the part. Print slices it and runs the
-            gate. Files holds every case.
-          </p>
-          <p>Open anything from Files and every view follows that case, never a mix of two.</p>
-        </SlideFrame>
-      )
-    case "agent":
-      return (
-        <SlideFrame vignette={<AgentVignette />} headline="It runs on your own agent">
-          <p>
-            Somatic drives the Claude Code or Codex you already have, on your own subscription. The vendor's app stays
-            the one that is signed in, and turns bill to your account. Somatic keeps no credentials.
-          </p>
-          <p>If one is missing or signed out, the chat says which and what to run.</p>
-        </SlideFrame>
-      )
-    case "gate":
-      return (
-        <SlideFrame vignette={<GateVignette />} headline="The gate says no before the printer does">
-          <p>
-            A job passes six checks before it can be sent: watertight, wall thickness, fits the bed, the right machine
-            profile, supports, and provenance. A failed check names the fix.
-          </p>
-          <p class="so-muted">Patient data stays in the lab. Only the synthetic demo case is ever shared.</p>
-        </SlideFrame>
-      )
-  }
+/** Each screen's artwork. The copy lives in onboarding-steps.ts. */
+const VIGNETTES: Record<WelcomeSlide, () => JSX.Element> = {
+  welcome: MarkVignette,
+  path: PathVignette,
+  agent: AgentVignette,
+  gate: GateVignette,
 }
 
 function SlideFrame(props: { vignette: JSX.Element; headline: string; children: JSX.Element }) {

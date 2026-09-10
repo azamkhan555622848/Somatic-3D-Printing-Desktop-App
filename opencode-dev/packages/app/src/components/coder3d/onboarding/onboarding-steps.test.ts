@@ -2,8 +2,10 @@ import { describe, expect, test } from "bun:test"
 import {
   ONBOARDING_KEY,
   ONBOARDING_VERSION,
+  SLIDES,
   TOUR_STOPS,
   WELCOME_SLIDES,
+  slideCopy,
   hasSeenOnboarding,
   markOnboardingSeen,
   nextSlide,
@@ -71,5 +73,35 @@ describe("seen state", () => {
     expect(hasSeenOnboarding(broken)).toBe(true)
     expect(() => markOnboardingSeen(broken)).not.toThrow()
     expect(hasSeenOnboarding(undefined)).toBe(false)
+  })
+})
+
+describe("welcome slide copy", () => {
+  test("every slide in the flow has copy, in the same order", () => {
+    expect(SLIDES.map((s) => s.id)).toEqual(WELCOME_SLIDES)
+    for (const id of WELCOME_SLIDES) expect(slideCopy(id).id).toBe(id)
+  })
+
+  test("no two screens read the same", () => {
+    // The card once rendered a switch inside a SolidJS component body, which
+    // runs once, so every Next redrew the first screen. Distinct headlines are
+    // what makes that visible if the copy is ever duplicated by hand.
+    const headlines = SLIDES.map((s) => s.headline)
+    expect(new Set(headlines).size).toBe(headlines.length)
+    const first = SLIDES.map((s) => s.body[0])
+    expect(new Set(first).size).toBe(first.length)
+  })
+
+  test("each screen says something, and any muted paragraph exists", () => {
+    for (const slide of SLIDES) {
+      expect(slide.headline.length).toBeGreaterThan(0)
+      expect(slide.body.length).toBeGreaterThan(0)
+      for (const paragraph of slide.body) expect(paragraph.trim().endsWith(".")).toBe(true)
+      if (slide.muted !== undefined) expect(slide.body[slide.muted]).toBeDefined()
+    }
+  })
+
+  test("an unknown slide is a loud failure, not a blank card", () => {
+    expect(() => slideCopy("nope" as never)).toThrow()
   })
 })

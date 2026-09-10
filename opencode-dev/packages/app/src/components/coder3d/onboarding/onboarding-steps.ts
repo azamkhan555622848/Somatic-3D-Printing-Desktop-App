@@ -10,7 +10,65 @@
 
 export type WelcomeSlide = "welcome" | "path" | "agent" | "gate"
 
-export const WELCOME_SLIDES: WelcomeSlide[] = ["welcome", "path", "agent", "gate"]
+export type SlideCopy = {
+  id: WelcomeSlide
+  headline: string
+  /** Paragraphs, in order. */
+  body: string[]
+  /** Index of the paragraph shown quieter than the rest, if any. */
+  muted?: number
+}
+
+/**
+ * The welcome screens as data rather than as branches inside a component.
+ * A SolidJS component body runs once, so a switch over the current slide
+ * returns the first slide's markup and then never changes again - which is
+ * exactly how the card came to show the same screen four times.
+ */
+export const SLIDES: SlideCopy[] = [
+  {
+    id: "welcome",
+    headline: "Welcome to Somatic",
+    body: [
+      "From a patient scan to a part that is safe to print, in one window. Import the scan, build the part as CAD, check the mesh, slice it, and pass the Print Gate before anything reaches the printer.",
+      "This is an alpha for the lab. Nothing it produces is a medical device.",
+    ],
+    muted: 1,
+  },
+  {
+    id: "path",
+    headline: "One path, four views",
+    body: [
+      "Medical reads the scan and segments it. Design builds and inspects the part. Print slices it and runs the gate. Files holds every case.",
+      "Open anything from Files and every view follows that case, never a mix of two.",
+    ],
+  },
+  {
+    id: "agent",
+    headline: "It runs on your own agent",
+    body: [
+      "Somatic drives the Claude Code or Codex you already have, on your own subscription. The vendor's app stays the one that is signed in, and turns bill to your account. Somatic keeps no credentials.",
+      "If one is missing or signed out, the chat says which and what to run.",
+    ],
+  },
+  {
+    id: "gate",
+    headline: "The gate says no before the printer does",
+    body: [
+      "A job passes six checks before it can be sent: watertight, wall thickness, fits the bed, the right machine profile, supports, and provenance. A failed check names the fix.",
+      "Patient data stays in the lab. Only the synthetic demo case is ever shared.",
+    ],
+    muted: 1,
+  },
+]
+
+export const WELCOME_SLIDES: WelcomeSlide[] = SLIDES.map((s) => s.id)
+
+export function slideCopy(id: WelcomeSlide): SlideCopy {
+  const found = SLIDES.find((s) => s.id === id)
+  if (!found) throw new Error(`no copy for welcome slide ${id}`)
+  return found
+}
 
 export type TourStop = {
   id: string
