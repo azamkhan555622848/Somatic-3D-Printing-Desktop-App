@@ -58,7 +58,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: windows-latest, target: win,   label: Windows x64,          root: "W:" }
+          - { os: windows-latest, target: win,   label: Windows x64,          root: "D:/s" }
           - { os: ubuntu-latest,  target: linux, label: Linux x64,            root: s }
           - { os: macos-14,       target: mac,   label: macOS Apple Silicon,  root: s }
           - { os: macos-13,       target: mac,   label: macOS Intel,          root: s }
@@ -72,19 +72,24 @@ jobs:
       NODE_OPTIONS: --max-old-space-size=6144
     steps:
       - uses: actions/checkout@v4
+        if: runner.os != 'Windows'
         with:
           path: s
-      # The runner's workspace already repeats the repository name, and bun's
-      # isolated node_modules layout on top of that pushed a native build past
-      # Windows' 260-character path limit (MSVC C1258). Mapping the checkout
-      # to a drive letter takes about 70 characters off every path beneath
-      # it; enabling long-paths mode on its own did not satisfy that compiler.
-      - name: Map the checkout to drive W
+      # Windows gets a plain clone into D:\s instead. The runner's workspace
+      # repeats the repository name, and bun's isolated node_modules layout on
+      # top of that pushed a native build past the 260-character path limit
+      # (MSVC C1258). Long-paths mode did not satisfy that compiler, and a
+      # subst drive crashed bun itself, so the checkout simply lives somewhere
+      # short. The clone fetches exactly the commit this run is for.
+      - name: Clone into a short path
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          subst W: (Resolve-Path "$env:GITHUB_WORKSPACE/s").Path
-          Get-ChildItem W:/ | Select-Object -First 3 | Format-Table Name
+          git init -q D:/s
+          git -C D:/s remote add origin "https://github.com/${{ github.repository }}"
+          git -C D:/s fetch -q --depth 1 origin "${{ github.sha }}"
+          git -C D:/s checkout -q FETCH_HEAD
+          git -C D:/s log -1 --oneline
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
@@ -105,8 +110,8 @@ jobs:
           name: somatic-${{ matrix.os }}
           if-no-files-found: error
           path: |
-            s/opencode-dev/packages/desktop/dist/somatic-*
-            !s/opencode-dev/packages/desktop/dist/*.blockmap
+            ${{ matrix.root }}/opencode-dev/packages/desktop/dist/somatic-*
+            !${{ matrix.root }}/opencode-dev/packages/desktop/dist/*.blockmap
 
   release:
     name: Publish release
